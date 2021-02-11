@@ -109,9 +109,11 @@ public class FloaterViewController: UIViewController {
 		let longPress = UILongPressGestureRecognizer(target: self, action: #selector(floaterDragActivated))
 		floaterContainer.addGestureRecognizer(longPress)
 
-		proposalView.backgroundColor = .systemBlue
+		proposalView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.3)
 		proposalView.translatesAutoresizingMaskIntoConstraints = false
 		view.addSubview(proposalView)
+
+		let proposalWidth: CGFloat = 6
 
 		let proposalViewAnchors = AnchorVariants(
 			leadingVisible: proposalView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -119,11 +121,13 @@ public class FloaterViewController: UIViewController {
 			bottom: proposalView.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor))
 		self.proposalViewAnchors = proposalViewAnchors
 		constraints.append(contentsOf: [
-			proposalView.widthAnchor.constraint(equalToConstant: 8),
+			proposalView.widthAnchor.constraint(equalToConstant: proposalWidth),
 			proposalView.heightAnchor.constraint(equalTo: floaterContainer.heightAnchor),
 			proposalViewAnchors.trailing,
 			proposalViewAnchors.bottom
 		])
+
+		proposalView.layer.cornerRadius = proposalWidth / 2
 
 		proposalView.isHidden = true
 	}
