@@ -66,6 +66,12 @@ class ViewController: UIViewController {
 		stackView.backgroundColor = .systemGray
 		stackView.layer.cornerRadius = 8
 
+		// configure here
+		floaterVC.animationSpeed = 0.5
+		floaterVC.yPosition = 24
+		floaterVC.inset = 24
+		floaterVC.snapEdge = .trailing
+
 		view.addSubview(floaterVC.view)
 		floaterVC.view.frame = view.bounds
 		addChild(floaterVC)
