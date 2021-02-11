@@ -20,18 +20,17 @@ class ViewController: UIViewController {
 		var constraints = [NSLayoutConstraint]()
 		defer { NSLayoutConstraint.activate(constraints) }
 
-		// this is just to test that touches properly get passed through
-		let action = UIAction { _ in
-			print("pressed background button")
+		let toggleAction = UIAction { [weak self] _ in
+			self?.floaterVC.isShowing.toggle()
 		}
-		let button = UIButton(frame: .zero, primaryAction: action)
-		button.setTitle("press me background", for: .normal)
 
-		button.translatesAutoresizingMaskIntoConstraints = false
+		let toggleButton = UIButton(frame: .zero, primaryAction: toggleAction)
+		toggleButton.setTitle("Toggle Visibility", for: .normal)
+		toggleButton.translatesAutoresizingMaskIntoConstraints = false
 
-		view.addSubview(button)
-		constraints.append(button.centerXAnchor.constraint(equalTo: view.centerXAnchor))
-		constraints.append(button.centerYAnchor.constraint(equalTo: view.centerYAnchor))
+		view.addSubview(toggleButton)
+		constraints.append(toggleButton.centerXAnchor.constraint(equalTo: view.centerXAnchor))
+		constraints.append(toggleButton.centerYAnchor.constraint(equalTo: view.centerYAnchor))
 
 		let testAction = UIAction { _ in
 			print("pressed testing")
