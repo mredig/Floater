@@ -200,7 +200,7 @@ public class FloaterViewController: UIViewController {
 				floaterContainerAnchors?.bottom.constant = yPosition
 
 				NSLayoutConstraint.activate(constraints)
-				view.layoutSubviews()
+				view.layoutIfNeeded()
 			}
 
 			if animate {
@@ -249,7 +249,7 @@ public class FloaterViewController: UIViewController {
 			animations: { [self] in
 				NSLayoutConstraint.deactivate(floaterContainerAnchors?.allToggled ?? [])
 				NSLayoutConstraint.activate(floaterContainerAnchors?.active(for: snapEdge, visible: isShowing) ?? [])
-				view.layoutSubviews()
+				view.layoutIfNeeded()
 			},
 			completion: { _ in })
 	}
