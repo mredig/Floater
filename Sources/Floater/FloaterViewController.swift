@@ -53,8 +53,6 @@ public class FloaterViewController: UIViewController {
 			constraints.append(other)
 			return constraints.compactMap { $0 }
 		}
-
-
 	}
 
 	public let floaterContainer = UIView()
@@ -67,7 +65,6 @@ public class FloaterViewController: UIViewController {
 	public var isShowing = true
 
 	private var dragOffset: CGSize = .zero
-	private var dragStart: CGPoint = .zero
 	let proposalView = UIView()
 	var proposalViewAnchors: AnchorVariants?
 
@@ -125,9 +122,6 @@ public class FloaterViewController: UIViewController {
 		])
 
 		proposalView.isHidden = true
-
-		// temp for testing
-		floaterContainer.backgroundColor = .systemGreen
 	}
 
 	@objc private func floaterDragActivated(_ gesture: UILongPressGestureRecognizer) {
@@ -148,7 +142,6 @@ public class FloaterViewController: UIViewController {
 	private func gestureBegan(_ gesture: UILongPressGestureRecognizer) {
 		let location = gesture.location(in: view)
 		dragOffset = .init(width: floaterContainer.center.x - location.x, height: floaterContainer.center.y - location.y)
-		dragStart = location
 		proposalView.isHidden = false
 
 		guard let floaterAnchors = floaterContainerAnchors else { return }
