@@ -240,17 +240,8 @@ public class FloaterViewController: UIViewController {
 	}
 
 	private func updateVisibility() {
-		UIView.animate(
-			withDuration: animationSpeed,
-			delay: 0,
-			usingSpringWithDamping: 0.7,
-			initialSpringVelocity: 0,
-			options: [],
-			animations: { [self] in
-				NSLayoutConstraint.deactivate(floaterContainerAnchors?.allToggled ?? [])
-				NSLayoutConstraint.activate(floaterContainerAnchors?.active(for: snapEdge, visible: isShowing) ?? [])
-				view.layoutIfNeeded()
-			},
-			completion: { _ in })
+		NSLayoutConstraint.deactivate(floaterContainerAnchors?.allToggled ?? [])
+		NSLayoutConstraint.activate(floaterContainerAnchors?.active(for: snapEdge, visible: isShowing) ?? [])
+		view.layoutIfNeeded()
 	}
 }

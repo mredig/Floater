@@ -21,7 +21,16 @@ class ViewController: UIViewController {
 		defer { NSLayoutConstraint.activate(constraints) }
 
 		let toggleAction = UIAction { [weak self] _ in
-			self?.floaterVC.isShowing.toggle()
+			UIView.animate(
+				withDuration: 0.5,
+				delay: 0,
+				usingSpringWithDamping: 0.65,
+				initialSpringVelocity: 0,
+				options: [],
+				animations: {
+					self?.floaterVC.isShowing.toggle()
+				},
+				completion: nil)
 		}
 
 		let toggleButton = UIButton(frame: .zero, primaryAction: toggleAction)
