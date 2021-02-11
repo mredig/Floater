@@ -156,8 +156,8 @@ public class FloaterViewController: UIViewController {
 	private func gestureMoved(_ gesture: UILongPressGestureRecognizer) {
 		let location = gesture.location(in: view)
 
-		floaterContainerAnchors?.bottom.constant = bottomConstant(for: location)
-		floaterContainerAnchors?.whenMoving?.constant = location.x
+		floaterContainerAnchors?.bottom.constant = bottomConstant(for: location) - dragOffset.height - (floaterContainer.bounds.height / 2)
+		floaterContainerAnchors?.whenMoving?.constant = location.x + dragOffset.width
 
 		var constraints: [NSLayoutConstraint] = []
 		defer { NSLayoutConstraint.activate(constraints) }
