@@ -151,9 +151,7 @@ public class FloaterViewController: UIViewController {
 	private func gestureMoved(_ gesture: UILongPressGestureRecognizer) {
 		let location = gesture.location(in: view)
 
-		let safeFromBottom = view.safeAreaInsets.bottom
-		let invertedAxis = view.frame.height - location.y
-		floaterContainerAnchors?.bottom.constant = invertedAxis - safeFromBottom
+		floaterContainerAnchors?.bottom.constant = bottomConstant(for: location)
 		floaterContainerAnchors?.whenMoving?.constant = location.x
 
 		var constraints: [NSLayoutConstraint] = []
@@ -172,7 +170,10 @@ public class FloaterViewController: UIViewController {
 
 	private func gestureEnded(_ gesture: UILongPressGestureRecognizer) {
 		// update to new position
-		snapEdge = proposedSnapEdge(for: gesture.location(in: view))
+		let location = gesture.location(in: view)
+		snapEdge = proposedSnapEdge(for: location)
+		yPosition = bottomConstant(for: location)
+
 		applySettings()
 	}
 
@@ -194,6 +195,7 @@ public class FloaterViewController: UIViewController {
 					floaterContainerAnchors?.whenMoving?.isActive = false
 					floaterContainerAnchors?.leading.constant = inset
 					floaterContainerAnchors?.trailing.constant = inset
+					floaterContainerAnchors?.bottom.constant = yPosition
 
 					NSLayoutConstraint.activate(constraints)
 					view.layoutSubviews()
@@ -215,5 +217,11 @@ public class FloaterViewController: UIViewController {
 		} else {
 			return .trailing
 		}
+	}
+
+	private func bottomConstant(for location: CGPoint) -> CGFloat {
+		let safeFromBottom = view.safeAreaInsets.bottom
+		let invertedAxis = view.frame.height - location.y
+		return invertedAxis - safeFromBottom
 	}
 }
