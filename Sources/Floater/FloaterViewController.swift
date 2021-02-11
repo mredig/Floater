@@ -15,8 +15,9 @@ public class FloaterViewController: UIViewController {
 	public var yPosition: CGFloat = 24
 
 	private var dragOffset: CGSize = .zero
+	private var dragStart: CGPoint = .zero
 	let proposalView = UIView()
-	var proposalViewAnchors: (leading: NSLayoutConstraint, trailing: NSLayoutConstraint)?
+	var proposalViewAnchors: (leading: NSLayoutConstraint, trailing: NSLayoutConstraint, bottom: NSLayoutConstraint)?
 
 	public override func loadView() {
 		view = PassthroughView()
@@ -40,10 +41,13 @@ public class FloaterViewController: UIViewController {
 		let floatTrailing = view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: floaterContainer.trailingAnchor, constant: inset)
 		let floatLeading = floaterContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: inset)
 		let floatBottom = view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor, constant: yPosition)
+		floatBottom.priority = .defaultHigh
 		floaterContainerAnchors = (floatLeading, floatTrailing, floatBottom)
 		constraints.append(contentsOf: [
 			floatTrailing,
-			floatBottom
+			floatBottom,
+			floaterContainer.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor),
+			view.safeAreaLayoutGuide.bottomAnchor.constraint(greaterThanOrEqualTo: floaterContainer.bottomAnchor)
 		])
 
 		let longPress = UILongPressGestureRecognizer(target: self, action: #selector(floaterDragActivated))
@@ -55,11 +59,13 @@ public class FloaterViewController: UIViewController {
 
 		let proposalTrailing = proposalView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
 		let proposalLeading = proposalView.leadingAnchor.constraint(equalTo: view.leadingAnchor)
-		proposalViewAnchors = (proposalLeading, proposalTrailing)
+		let proposalBottom = proposalView.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor)
+		proposalViewAnchors = (proposalLeading, proposalTrailing, proposalBottom)
 		constraints.append(contentsOf: [
 			proposalView.widthAnchor.constraint(equalToConstant: 8),
 			proposalView.heightAnchor.constraint(equalTo: floaterContainer.heightAnchor),
-			proposalTrailing
+			proposalTrailing,
+			proposalBottom
 		])
 
 		proposalView.isHidden = true
@@ -86,24 +92,39 @@ public class FloaterViewController: UIViewController {
 	private func gestureBegan(_ gesture: UILongPressGestureRecognizer) {
 		let location = gesture.location(in: view)
 		dragOffset = .init(width: floaterContainer.center.x - location.x, height: floaterContainer.center.y - location.y)
+		dragStart = location
 		proposalView.isHidden = false
 
 		guard let floaterAnchors = floaterContainerAnchors else { return }
-		NSLayoutConstraint.deactivate([floaterAnchors.leading, floaterAnchors.trailing, floaterAnchors.bottom])
+		NSLayoutConstraint.deactivate([floaterAnchors.leading, floaterAnchors.trailing])
 	}
 
 	private func gestureMoved(_ gesture: UILongPressGestureRecognizer) {
 		let location = gesture.location(in: view)
-		floaterContainer.center = CGPoint(x: location.x + dragOffset.width, y: location.y + dragOffset.height)
-		proposalView.center.y = floaterContainer.center.y
+//		let offsetY = location.y - dragStart.y
+
+//		floaterContainer.center = CGPoint(x: location.x + dragOffset.width, y: location.y + dragOffset.height)
+
+		let safeFromBottom = view.safeAreaInsets.bottom
+		let invertedAxis = view.frame.height - location.y
+		floaterContainerAnchors?.bottom.constant = invertedAxis - safeFromBottom
+
+		var constraints: [NSLayoutConstraint] = []
+		defer { NSLayoutConstraint.activate(constraints) }
+
 		let proposedEdge = proposedSnapEdge(for: location)
-		guard let proposalAnchors = proposalViewAnchors else { return }
-		NSLayoutConstraint.deactivate([proposalAnchors.leading, proposalAnchors.trailing])
+		guard
+			let proposalAnchors = proposalViewAnchors,
+			let containerAnchors = floaterContainerAnchors
+		else { return }
+		NSLayoutConstraint.deactivate([proposalAnchors.leading, proposalAnchors.trailing, containerAnchors.leading, containerAnchors.trailing])
 		switch proposedEdge {
 		case .leading:
-			proposalAnchors.leading.isActive = true
+			constraints.append(proposalAnchors.leading)
+			constraints.append(containerAnchors.leading)
 		case .trailing:
-			proposalAnchors.trailing.isActive = true
+			constraints.append(proposalAnchors.trailing)
+			constraints.append(containerAnchors.trailing)
 		}
 	}
 
