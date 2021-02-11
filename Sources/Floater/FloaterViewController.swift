@@ -60,6 +60,7 @@ public class FloaterViewController: UIViewController {
 
 	public var inset: CGFloat = 24
 	public var snapEdge = SnapEdge.trailing
+	// from bottom safe area
 	public var yPosition: CGFloat = 24
 
 	public var isShowing = true {
@@ -67,6 +68,8 @@ public class FloaterViewController: UIViewController {
 			updateVisibility()
 		}
 	}
+
+	public var animationSpeed: TimeInterval = 0.5
 
 	private var dragOffset: CGSize = .zero
 	let proposalView = UIView()
@@ -202,7 +205,7 @@ public class FloaterViewController: UIViewController {
 
 			if animate {
 				UIView.animate(
-					withDuration: 0.5,
+					withDuration: animationSpeed,
 					delay: 0,
 					usingSpringWithDamping: 0.7,
 					initialSpringVelocity: 0,
@@ -238,7 +241,7 @@ public class FloaterViewController: UIViewController {
 
 	private func updateVisibility() {
 		UIView.animate(
-			withDuration: 0.3,
+			withDuration: animationSpeed,
 			delay: 0,
 			usingSpringWithDamping: 0.7,
 			initialSpringVelocity: 0,
