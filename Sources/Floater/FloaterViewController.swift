@@ -159,7 +159,7 @@ public class FloaterViewController: UIViewController {
 	private func gestureMoved(_ gesture: UILongPressGestureRecognizer) {
 		let location = gesture.location(in: view)
 
-		floaterContainerAnchors?.bottom.constant = bottomConstant(for: location) - dragOffset.height - (floaterContainer.bounds.height / 2)
+		floaterContainerAnchors?.bottom.constant = bottomConstant(for: location)
 		floaterContainerAnchors?.whenMoving?.constant = location.x + dragOffset.width
 
 		var constraints: [NSLayoutConstraint] = []
@@ -236,7 +236,7 @@ public class FloaterViewController: UIViewController {
 	private func bottomConstant(for location: CGPoint) -> CGFloat {
 		let safeFromBottom = view.safeAreaInsets.bottom
 		let invertedAxis = view.frame.height - location.y
-		return invertedAxis - safeFromBottom
+		return invertedAxis - safeFromBottom - dragOffset.height - (floaterContainer.bounds.height / 2)
 	}
 
 	private func updateVisibility() {
