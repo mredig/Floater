@@ -62,7 +62,11 @@ public class FloaterViewController: UIViewController {
 	public var snapEdge = SnapEdge.trailing
 	public var yPosition: CGFloat = 24
 
-	public var isShowing = true
+	public var isShowing = true {
+		didSet {
+			updateVisibility()
+		}
+	}
 
 	private var dragOffset: CGSize = .zero
 	let proposalView = UIView()
@@ -91,7 +95,7 @@ public class FloaterViewController: UIViewController {
 			leadingVisible: floaterContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: inset),
 			leadingHidden: view.leadingAnchor.constraint(equalTo: floaterContainer.trailingAnchor),
 			trailingVisible: view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: floaterContainer.trailingAnchor, constant: inset),
-			trailingHidden: floaterContainer.trailingAnchor.constraint(equalTo: view.leadingAnchor),
+			trailingHidden: floaterContainer.leadingAnchor.constraint(equalTo: view.trailingAnchor),
 			whenMoving: floaterContainer.centerXAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
 			bottom: view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor, constant: yPosition))
 		self.floaterContainerAnchors = floaterContainerAnchors
@@ -223,5 +227,20 @@ public class FloaterViewController: UIViewController {
 		let safeFromBottom = view.safeAreaInsets.bottom
 		let invertedAxis = view.frame.height - location.y
 		return invertedAxis - safeFromBottom
+	}
+
+	private func updateVisibility() {
+		UIView.animate(
+			withDuration: 0.3,
+			delay: 0,
+			usingSpringWithDamping: 0.7,
+			initialSpringVelocity: 0,
+			options: [],
+			animations: { [self] in
+				NSLayoutConstraint.deactivate(floaterContainerAnchors?.allToggled ?? [])
+				NSLayoutConstraint.activate(floaterContainerAnchors?.active(for: snapEdge, visible: isShowing) ?? [])
+				view.layoutSubviews()
+			},
+			completion: { _ in })
 	}
 }
