@@ -12,6 +12,7 @@ public class FloaterViewController: UIViewController {
 		let leadingHidden: NSLayoutConstraint?
 		let trailing: NSLayoutConstraint
 		let trailingHidden: NSLayoutConstraint?
+		let whenMoving: NSLayoutConstraint?
 		let bottom: NSLayoutConstraint
 
 		init(
@@ -19,23 +20,25 @@ public class FloaterViewController: UIViewController {
 			leadingHidden: NSLayoutConstraint? = nil,
 			trailingVisible: NSLayoutConstraint,
 			trailingHidden: NSLayoutConstraint? = nil,
+			whenMoving: NSLayoutConstraint? = nil,
 			bottom: NSLayoutConstraint) {
 
 			self.leading = leadingVisible
 			self.leadingHidden = leadingHidden
 			self.trailing = trailingVisible
 			self.trailingHidden = trailingHidden
+			self.whenMoving = whenMoving
 			self.bottom = bottom
 
 			self.bottom.priority = .defaultLow - 1
 		}
 
 		var all: [NSLayoutConstraint] {
-			[leading, leadingHidden, trailing, trailingHidden, bottom].compactMap { $0 }
+			[leading, leadingHidden, trailing, trailingHidden, whenMoving, bottom].compactMap { $0 }
 		}
 
 		var allToggled: [NSLayoutConstraint] {
-			[leadingHidden, leading, trailingHidden, trailing].compactMap { $0 }
+			[leadingHidden, leading, trailingHidden, whenMoving, trailing].compactMap { $0 }
 		}
 
 		func active(for snapEdge: SnapEdge, visible: Bool) -> [NSLayoutConstraint] {
@@ -92,6 +95,7 @@ public class FloaterViewController: UIViewController {
 			leadingHidden: view.leadingAnchor.constraint(equalTo: floaterContainer.trailingAnchor),
 			trailingVisible: view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: floaterContainer.trailingAnchor, constant: inset),
 			trailingHidden: floaterContainer.trailingAnchor.constraint(equalTo: view.leadingAnchor),
+			whenMoving: floaterContainer.centerXAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
 			bottom: view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor, constant: yPosition))
 		self.floaterContainerAnchors = floaterContainerAnchors
 		constraints.append(contentsOf: [
@@ -153,13 +157,11 @@ public class FloaterViewController: UIViewController {
 
 	private func gestureMoved(_ gesture: UILongPressGestureRecognizer) {
 		let location = gesture.location(in: view)
-//		let offsetY = location.y - dragStart.y
-
-//		floaterContainer.center = CGPoint(x: location.x + dragOffset.width, y: location.y + dragOffset.height)
 
 		let safeFromBottom = view.safeAreaInsets.bottom
 		let invertedAxis = view.frame.height - location.y
 		floaterContainerAnchors?.bottom.constant = invertedAxis - safeFromBottom
+		floaterContainerAnchors?.whenMoving?.constant = location.x
 
 		var constraints: [NSLayoutConstraint] = []
 		defer { NSLayoutConstraint.activate(constraints) }
@@ -171,7 +173,8 @@ public class FloaterViewController: UIViewController {
 		else { return }
 		NSLayoutConstraint.deactivate(proposalViewAnchors.allToggled + floaterContainerAnchors.allToggled)
 		constraints.append(contentsOf: proposalViewAnchors.active(for: proposedEdge, visible: isShowing))
-		constraints.append(contentsOf: floaterContainerAnchors.active(for: proposedEdge, visible: isShowing))
+
+		floaterContainerAnchors.whenMoving?.isActive = true
 	}
 
 	private func gestureEnded(_ gesture: UILongPressGestureRecognizer) {
@@ -188,12 +191,21 @@ public class FloaterViewController: UIViewController {
 	private func applySettings() {
 		var constraints: [NSLayoutConstraint] = []
 		defer {
-			UIView.animate(withDuration: 0.5) { [self] in
-				floaterContainerAnchors?.leading.constant = inset
-				floaterContainerAnchors?.trailing.constant = inset
+			UIView.animate(
+				withDuration: 0.5,
+				delay: 0,
+				usingSpringWithDamping: 0.7,
+				initialSpringVelocity: 0,
+				options: [],
+				animations: { [self] in
+					floaterContainerAnchors?.whenMoving?.isActive = false
+					floaterContainerAnchors?.leading.constant = inset
+					floaterContainerAnchors?.trailing.constant = inset
 
-				NSLayoutConstraint.activate(constraints)
-			}
+					NSLayoutConstraint.activate(constraints)
+					view.layoutSubviews()
+				},
+				completion: { success in })
 		}
 
 		constraints += floaterContainerAnchors?.active(for: snapEdge, visible: isShowing) ?? []
