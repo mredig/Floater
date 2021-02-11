@@ -53,6 +53,7 @@ class ViewController: UIViewController {
 		let stackView = UIStackView()
 		stackView.addArrangedSubview(testButton)
 		stackView.addArrangedSubview(testButton2)
+		stackView.spacing = 8
 		floaterVC.floaterContainer.addSubview(stackView)
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -63,8 +64,8 @@ class ViewController: UIViewController {
 			stackView.bottomAnchor.constraint(equalTo: floaterVC.floaterContainer.bottomAnchor),
 		])
 
-//		testButton.setContentHuggingPriority(.required, for: .horizontal)
-//		testButton.setContentHuggingPriority(.required, for: .vertical)
+		stackView.backgroundColor = .systemGray
+		stackView.layer.cornerRadius = 8
 
 		view.addSubview(floaterVC.view)
 		floaterVC.view.frame = view.bounds
