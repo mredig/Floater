@@ -100,8 +100,6 @@ public class FloaterViewController: UIViewController {
 			bottom: view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor, constant: yPosition))
 		self.floaterContainerAnchors = floaterContainerAnchors
 		constraints.append(contentsOf: [
-			floaterContainerAnchors.trailing,
-			floaterContainerAnchors.bottom,
 			floaterContainer.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor),
 			view.safeAreaLayoutGuide.bottomAnchor.constraint(greaterThanOrEqualTo: floaterContainer.bottomAnchor)
 		])
@@ -123,13 +121,12 @@ public class FloaterViewController: UIViewController {
 		constraints.append(contentsOf: [
 			proposalView.widthAnchor.constraint(equalToConstant: proposalWidth),
 			proposalView.heightAnchor.constraint(equalTo: floaterContainer.heightAnchor),
-			proposalViewAnchors.trailing,
-			proposalViewAnchors.bottom
 		])
 
 		proposalView.layer.cornerRadius = proposalWidth / 2
 
 		proposalView.isHidden = true
+		applySettings(animate: false)
 	}
 
 	@objc private func floaterDragActivated(_ gesture: UILongPressGestureRecognizer) {
@@ -190,25 +187,31 @@ public class FloaterViewController: UIViewController {
 		applySettings()
 	}
 
-	private func applySettings() {
+	private func applySettings(animate: Bool = true) {
 		var constraints: [NSLayoutConstraint] = []
 		defer {
-			UIView.animate(
-				withDuration: 0.5,
-				delay: 0,
-				usingSpringWithDamping: 0.7,
-				initialSpringVelocity: 0,
-				options: [],
-				animations: { [self] in
-					floaterContainerAnchors?.whenMoving?.isActive = false
-					floaterContainerAnchors?.leading.constant = inset
-					floaterContainerAnchors?.trailing.constant = inset
-					floaterContainerAnchors?.bottom.constant = yPosition
+			let block = { [self] in
+				floaterContainerAnchors?.whenMoving?.isActive = false
+				floaterContainerAnchors?.leading.constant = inset
+				floaterContainerAnchors?.trailing.constant = inset
+				floaterContainerAnchors?.bottom.constant = yPosition
 
-					NSLayoutConstraint.activate(constraints)
-					view.layoutSubviews()
-				},
-				completion: { success in })
+				NSLayoutConstraint.activate(constraints)
+				view.layoutSubviews()
+			}
+
+			if animate {
+				UIView.animate(
+					withDuration: 0.5,
+					delay: 0,
+					usingSpringWithDamping: 0.7,
+					initialSpringVelocity: 0,
+					options: [],
+					animations: block,
+					completion: { success in })
+			} else {
+				block()
+			}
 		}
 
 		constraints += floaterContainerAnchors?.active(for: snapEdge, visible: isShowing) ?? []

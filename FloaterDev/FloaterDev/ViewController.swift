@@ -71,7 +71,5 @@ class ViewController: UIViewController {
 		addChild(floaterVC)
 		floaterVC.didMove(toParent: self)
 	}
-
-
 }
 
