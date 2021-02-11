@@ -33,7 +33,38 @@ class ViewController: UIViewController {
 		constraints.append(button.centerXAnchor.constraint(equalTo: view.centerXAnchor))
 		constraints.append(button.centerYAnchor.constraint(equalTo: view.centerYAnchor))
 
+		let testAction = UIAction { _ in
+			print("pressed testing")
+		}
 
+		let systemAction = UIAction { _ in
+			print("pressed system")
+		}
+
+
+		let testButton = UIButton()
+		testButton.setTitle("Testing!", for: .normal)
+		testButton.addAction(testAction, for: .touchUpInside)
+
+		let testButton2 = UIButton(type: .system)
+		testButton2.setTitle("System", for: .normal)
+		testButton2.addAction(systemAction, for: .touchUpInside)
+
+		let stackView = UIStackView()
+		stackView.addArrangedSubview(testButton)
+		stackView.addArrangedSubview(testButton2)
+		floaterVC.floaterContainer.addSubview(stackView)
+		stackView.translatesAutoresizingMaskIntoConstraints = false
+
+		NSLayoutConstraint.activate([
+			stackView.leadingAnchor.constraint(equalTo: floaterVC.floaterContainer.leadingAnchor),
+			stackView.trailingAnchor.constraint(equalTo: floaterVC.floaterContainer.trailingAnchor),
+			stackView.topAnchor.constraint(equalTo: floaterVC.floaterContainer.topAnchor),
+			stackView.bottomAnchor.constraint(equalTo: floaterVC.floaterContainer.bottomAnchor),
+		])
+
+//		testButton.setContentHuggingPriority(.required, for: .horizontal)
+//		testButton.setContentHuggingPriority(.required, for: .vertical)
 
 		view.addSubview(floaterVC.view)
 		floaterVC.view.frame = view.bounds
