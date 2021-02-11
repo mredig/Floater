@@ -7,17 +7,66 @@ public class FloaterViewController: UIViewController {
 		case trailing
 	}
 
+	public struct AnchorVariants {
+		let leading: NSLayoutConstraint
+		let leadingHidden: NSLayoutConstraint?
+		let trailing: NSLayoutConstraint
+		let trailingHidden: NSLayoutConstraint?
+		let bottom: NSLayoutConstraint
+
+		init(
+			leadingVisible: NSLayoutConstraint,
+			leadingHidden: NSLayoutConstraint? = nil,
+			trailingVisible: NSLayoutConstraint,
+			trailingHidden: NSLayoutConstraint? = nil,
+			bottom: NSLayoutConstraint) {
+
+			self.leading = leadingVisible
+			self.leadingHidden = leadingHidden
+			self.trailing = trailingVisible
+			self.trailingHidden = trailingHidden
+			self.bottom = bottom
+
+			self.bottom.priority = .defaultLow - 1
+		}
+
+		var all: [NSLayoutConstraint] {
+			[leading, leadingHidden, trailing, trailingHidden, bottom].compactMap { $0 }
+		}
+
+		var allToggled: [NSLayoutConstraint] {
+			[leadingHidden, leading, trailingHidden, trailing].compactMap { $0 }
+		}
+
+		func active(for snapEdge: SnapEdge, visible: Bool) -> [NSLayoutConstraint] {
+			var constraints: [NSLayoutConstraint?] = [bottom]
+			let other: NSLayoutConstraint?
+			switch snapEdge {
+			case .leading:
+				other = visible ? leading : leadingHidden
+			case .trailing:
+				other = visible ? trailing : trailingHidden
+			}
+			constraints.append(other)
+			return constraints.compactMap { $0 }
+		}
+
+
+	}
+
 	public let floaterContainer = UIView()
-	var floaterContainerAnchors: (leading: NSLayoutConstraint, trailing: NSLayoutConstraint, bottom: NSLayoutConstraint)?
+	var floaterContainerAnchors: AnchorVariants?
 
 	public var inset: CGFloat = 24
 	public var snapEdge = SnapEdge.trailing
 	public var yPosition: CGFloat = 24
 
+	public var isShowing = true
+
 	private var dragOffset: CGSize = .zero
 	private var dragStart: CGPoint = .zero
 	let proposalView = UIView()
-	var proposalViewAnchors: (leading: NSLayoutConstraint, trailing: NSLayoutConstraint, bottom: NSLayoutConstraint)?
+	var proposalViewAnchors: AnchorVariants?
 
 	public override func loadView() {
 		view = PassthroughView()
@@ -36,16 +85,18 @@ public class FloaterViewController: UIViewController {
 			floaterContainer.widthAnchor.constraint(equalToConstant: 55),
 			floaterContainer.heightAnchor.constraint(equalToConstant: 55)
 		])
-		constraints.forEach { $0.priority = .defaultLow }
+		constraints.forEach { $0.priority = .defaultLow - 1 }
 
-		let floatTrailing = view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: floaterContainer.trailingAnchor, constant: inset)
-		let floatLeading = floaterContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: inset)
-		let floatBottom = view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor, constant: yPosition)
-		floatBottom.priority = .defaultHigh
-		floaterContainerAnchors = (floatLeading, floatTrailing, floatBottom)
+		let floaterContainerAnchors = AnchorVariants(
+			leadingVisible: floaterContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: inset),
+			leadingHidden: view.leadingAnchor.constraint(equalTo: floaterContainer.trailingAnchor),
+			trailingVisible: view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: floaterContainer.trailingAnchor, constant: inset),
+			trailingHidden: floaterContainer.trailingAnchor.constraint(equalTo: view.leadingAnchor),
+			bottom: view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor, constant: yPosition))
+		self.floaterContainerAnchors = floaterContainerAnchors
 		constraints.append(contentsOf: [
-			floatTrailing,
-			floatBottom,
+			floaterContainerAnchors.trailing,
+			floaterContainerAnchors.bottom,
 			floaterContainer.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor),
 			view.safeAreaLayoutGuide.bottomAnchor.constraint(greaterThanOrEqualTo: floaterContainer.bottomAnchor)
 		])
@@ -57,15 +108,16 @@ public class FloaterViewController: UIViewController {
 		proposalView.translatesAutoresizingMaskIntoConstraints = false
 		view.addSubview(proposalView)
 
-		let proposalTrailing = proposalView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-		let proposalLeading = proposalView.leadingAnchor.constraint(equalTo: view.leadingAnchor)
-		let proposalBottom = proposalView.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor)
-		proposalViewAnchors = (proposalLeading, proposalTrailing, proposalBottom)
+		let proposalViewAnchors = AnchorVariants(
+			leadingVisible: proposalView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+			trailingVisible: proposalView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			bottom: proposalView.bottomAnchor.constraint(equalTo: floaterContainer.bottomAnchor))
+		self.proposalViewAnchors = proposalViewAnchors
 		constraints.append(contentsOf: [
 			proposalView.widthAnchor.constraint(equalToConstant: 8),
 			proposalView.heightAnchor.constraint(equalTo: floaterContainer.heightAnchor),
-			proposalTrailing,
-			proposalBottom
+			proposalViewAnchors.trailing,
+			proposalViewAnchors.bottom
 		])
 
 		proposalView.isHidden = true
@@ -96,7 +148,7 @@ public class FloaterViewController: UIViewController {
 		proposalView.isHidden = false
 
 		guard let floaterAnchors = floaterContainerAnchors else { return }
-		NSLayoutConstraint.deactivate([floaterAnchors.leading, floaterAnchors.trailing])
+		NSLayoutConstraint.deactivate(floaterAnchors.allToggled)
 	}
 
 	private func gestureMoved(_ gesture: UILongPressGestureRecognizer) {
@@ -114,18 +166,12 @@ public class FloaterViewController: UIViewController {
 
 		let proposedEdge = proposedSnapEdge(for: location)
 		guard
-			let proposalAnchors = proposalViewAnchors,
-			let containerAnchors = floaterContainerAnchors
+			let proposalViewAnchors = proposalViewAnchors,
+			let floaterContainerAnchors = floaterContainerAnchors
 		else { return }
-		NSLayoutConstraint.deactivate([proposalAnchors.leading, proposalAnchors.trailing, containerAnchors.leading, containerAnchors.trailing])
-		switch proposedEdge {
-		case .leading:
-			constraints.append(proposalAnchors.leading)
-			constraints.append(containerAnchors.leading)
-		case .trailing:
-			constraints.append(proposalAnchors.trailing)
-			constraints.append(containerAnchors.trailing)
-		}
+		NSLayoutConstraint.deactivate(proposalViewAnchors.allToggled + floaterContainerAnchors.allToggled)
+		constraints.append(contentsOf: proposalViewAnchors.active(for: proposedEdge, visible: isShowing))
+		constraints.append(contentsOf: floaterContainerAnchors.active(for: proposedEdge, visible: isShowing))
 	}
 
 	private func gestureEnded(_ gesture: UILongPressGestureRecognizer) {
@@ -141,16 +187,18 @@ public class FloaterViewController: UIViewController {
 
 	private func applySettings() {
 		var constraints: [NSLayoutConstraint] = []
-		defer { NSLayoutConstraint.activate(constraints) }
+		defer {
+			UIView.animate(withDuration: 0.5) { [self] in
+				floaterContainerAnchors?.leading.constant = inset
+				floaterContainerAnchors?.trailing.constant = inset
 
-		switch snapEdge {
-		case .leading:
-			constraints.append(contentsOf: [floaterContainerAnchors?.leading, proposalViewAnchors?.leading].compactMap({ $0 }))
-		case .trailing:
-			constraints.append(contentsOf: [floaterContainerAnchors?.trailing, proposalViewAnchors?.trailing].compactMap({ $0 }))
+				NSLayoutConstraint.activate(constraints)
+			}
 		}
 
-		constraints.append(contentsOf: [floaterContainerAnchors?.bottom].compactMap { $0 })
+		constraints += floaterContainerAnchors?.active(for: snapEdge, visible: isShowing) ?? []
+		constraints += proposalViewAnchors?.active(for: snapEdge, visible: isShowing) ?? []
+
 		proposalView.isHidden = true
 	}
 
